@@ -1,0 +1,58 @@
+diff -ruN boost_1_55_0/boost/config/user.hpp boost_1_55_0-patched/boost/config/user.hpp
+--- boost_1_55_0/boost/config/user.hpp	2004-01-10 15:10:00.000000000 +0300
++++ boost_1_55_0-patched/boost/config/user.hpp	2013-11-26 19:02:14.096716557 +0400
+@@ -120,5 +120,8 @@
+ // that feature off.
+ // #define BOOST_WHATEVER_NO_LIB
+  
+-
++// There are some issues with std::atomic on android 
++// See https://code.google.com/p/android/issues/detail?id=42735#makechanges 
++#define DBOOST_ASIO_DISABLE_STD_ATOMIC
++#define BOOST_AC_USE_PTHREADS
+ 
+diff -ruN boost_1_55_0/bootstrap.sh boost_1_55_0-patched/bootstrap.sh
+--- boost_1_55_0/bootstrap.sh	2013-09-22 00:17:00.000000000 +0400
++++ boost_1_55_0-patched/bootstrap.sh	2013-11-26 18:38:12.946344259 +0400
+@@ -334,7 +334,7 @@
+ # file.
+ if ! $TOOLSET in [ feature.values <toolset> ]
+ {
+-    using $TOOLSET ; 
++    using gcc : arm : arm-linux-androideabi-g++ ; 
+ }
+ 
+ project : default-build <toolset>$TOOLSET ;
+diff -ruN boost_1_55_0/libs/chrono/build/Jamfile.v2 boost_1_55_0-patched/libs/chrono/build/Jamfile.v2
+--- boost_1_55_0/libs/chrono/build/Jamfile.v2	2013-03-29 03:45:26.000000000 +0400
++++ boost_1_55_0-patched/libs/chrono/build/Jamfile.v2	2013-11-26 18:44:54.342304994 +0400
+@@ -12,7 +12,6 @@
+     : source-location ../src
+     : requirements
+         <target-os>freebsd:<linkflags>"-lrt" 
+-        <target-os>linux:<linkflags>"-lrt -lpthread" 
+         <toolset>pgi:<linkflags>"-lrt" 
+         #<threading>single:<define>BOOST_CHRONO_THREAD_DISABLED
+         <library>/boost/system//boost_system
+diff -ruN boost_1_55_0/libs/log/build/Jamfile.v2 boost_1_55_0-patched/libs/log/build/Jamfile.v2
+--- boost_1_55_0/libs/log/build/Jamfile.v2	2013-10-08 18:44:59.000000000 +0400
++++ boost_1_55_0-patched/libs/log/build/Jamfile.v2	2013-11-26 18:46:11.147064385 +0400
+@@ -122,7 +122,6 @@
+         <threading>multi:<library>/boost/thread//boost_thread
+         <target-os>windows:<library>ws2_32
+         <target-os>freebsd:<linkflags>"-lrt"
+-        <target-os>linux:<linkflags>"-lrt -lpthread"
+         <toolset>pgi:<linkflags>"-lrt"
+     : usage-requirements
+         <toolset>clang:<cxxflags>-Wno-bind-to-temporary-copy
+diff -ruN boost_1_55_0/tools/build/v2/tools/gcc.jam boost_1_55_0-patched/tools/build/v2/tools/gcc.jam
+--- boost_1_55_0/tools/build/v2/tools/gcc.jam	2013-05-12 22:02:44.000000000 +0400
++++ boost_1_55_0-patched/tools/build/v2/tools/gcc.jam	2013-11-26 18:41:55.644540023 +0400
+@@ -1032,7 +1032,6 @@
+             case *bsd    : option = -pthread ;  # There is no -lrt on BSD.
+             case sgi     : # gcc on IRIX does not support multi-threading.
+             case darwin  : # No threading options.
+-            case *       : option = -pthread ; libs = rt ;
+         }
+ 
+         if $(option)
